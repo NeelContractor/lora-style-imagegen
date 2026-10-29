@@ -59,3 +59,17 @@ def test_component_loading_requires_safetensors(monkeypatch) -> None:
         assert calls[component]["use_safetensors"] is True
     assert "use_safetensors" not in calls["tokenizer"]
     assert "use_safetensors" not in calls["scheduler"]
+
+
+def test_lora_parameters_are_float32_when_base_model_is_fp16() -> None:
+    config = load_config(PROJECT_ROOT / "configs/train_lora.yaml")
+    unet = train._build_tiny_unet().half()
+
+    train._add_lora(unet, config)
+
+    trainable = [parameter for parameter in unet.parameters() if parameter.requires_grad]
+    assert trainable
+    assert {parameter.dtype for parameter in trainable} == {torch.float32}
+    assert {parameter.dtype for parameter in unet.parameters() if not parameter.requires_grad} == {
+        torch.float16
+    }

@@ -453,6 +453,8 @@ def _add_lora(unet: UNet2DConditionModel, config: TrainConfig) -> int:
     trainable_parameters = [parameter for parameter in unet.parameters() if parameter.requires_grad]
     if not trainable_parameters:
         raise TrainingError("LoRA adapter added no trainable parameters")
+    for parameter in trainable_parameters:
+        parameter.data = parameter.data.float()
     return sum(parameter.numel() for parameter in trainable_parameters)
 
 
