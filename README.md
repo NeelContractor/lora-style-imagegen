@@ -192,6 +192,17 @@ Gradio 6.31 caps Pillow below 13, while Pillow 12.3 has known security advisorie
 project overrides the cap to install Pillow 13 and smoke-tests the Gradio UI against it.
 `uv pip check` reports this intentional mismatch.
 
+### Hosting notes
+
+This demo is smoke-tested on a Colab T4. The `--share` URL is a temporary tunnel to the
+Colab runtime, not permanent hosting; it stops when the runtime stops. There is no extra
+Gradio fee, but the app uses the Colab GPU quota and anyone with the link can generate
+images.
+
+For permanent hosting, deploy `app/app.py` as a Hugging Face Space or another GPU host.
+A free CPU Space is too slow for practical SD 1.5 inference; usable hosting requires GPU
+hardware.
+
 ## Development
 
 ```sh

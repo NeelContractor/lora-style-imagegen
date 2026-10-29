@@ -14,7 +14,7 @@ style or subject, then comparing and hosting the result.
   huggingface_hub, Pillow, PyYAML, tensorboard. Ask before adding anything else.
 - Never commit raw or processed images, model weights, generated outputs, tokens, or
   secrets.
-- Status: Phases 1 through 4 are implemented; the Gradio demo needs a T4 smoke test.
+- Status: Phases 1 through 4 are complete; the Gradio demo is smoke-tested on a T4.
 
 ## Commands
 
