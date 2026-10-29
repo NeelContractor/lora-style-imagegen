@@ -2,7 +2,8 @@
 
 A small, reproducible Stable Diffusion 1.5 LoRA project for one personal visual style or subject.
 
-Status: Phases 1 through 4 are complete, with package builds in place.
+Status: Functional version complete (v0.1.0). Optional follow-ups are listed in
+[Backlog](#backlog).
 
 ## Requirements
 
@@ -202,6 +203,19 @@ images.
 For permanent hosting, deploy `app/app.py` as a Hugging Face Space or another GPU host.
 A free CPU Space is too slow for practical SD 1.5 inference; usable hosting requires GPU
 hardware.
+
+## Backlog
+
+The functional project is complete. Optional follow-ups:
+
+- **CI:** The GitHub Actions workflow was intentionally removed.
+- **Permanent hosting:** Hugging Face Spaces is deferred. If the demo is made public,
+  consider auth and rate limiting.
+- **Release:** `v0.1.0` is not tagged yet; tag and push it when ready.
+- **Model quality:** Prompt, LoRA strength, steps, or training hyperparameters can still
+  be tuned.
+- **Maintenance:** Revisit the Gradio 6.31/Pillow 13 override when Gradio supports Pillow
+  13 natively. `uv pip check` currently reports this intentional mismatch.
 
 ## Development
 
