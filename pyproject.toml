@@ -7,10 +7,25 @@ name = "lora-style-imagegen"
 version = "0.1.0"
 description = "LoRA fine-tuning and demo for a personal Stable Diffusion 1.5 style"
 requires-python = ">=3.11"
-dependencies = ["pillow>=10.4.0"]
+dependencies = [
+    "pillow>=10.4.0",
+    "pyyaml>=6.0.2",
+]
 
 [project.scripts]
 prepare-dataset = "lora_style_imagegen.dataset_prep:main"
+train-lora = "lora_style_imagegen.train:main"
+
+[project.optional-dependencies]
+train = [
+    "accelerate>=1.0.0",
+    "bitsandbytes>=0.43.0 ; sys_platform == 'linux'",
+    "diffusers>=0.42.0",
+    "peft>=0.13.0",
+    "tensorboard>=2.16.0",
+    "torch>=2.3.0",
+    "transformers>=5.0.0",
+]
 
 [dependency-groups]
 dev = ["pre-commit>=4.0.0", "pytest>=8.3.0", "ruff>=0.8.0"]
