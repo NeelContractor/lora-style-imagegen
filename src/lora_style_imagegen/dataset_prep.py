@@ -12,7 +12,7 @@ from typing import Any
 
 from PIL import Image, ImageOps, UnidentifiedImageError
 
-IMAGE_EXTENSIONS = frozenset({".bmp", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp"})
+IMAGE_EXTENSIONS = frozenset({".avif", ".bmp", ".jpeg", ".jpg", ".png", ".tif", ".tiff", ".webp"})
 IMAGE_FORMATS = ("png", "jpg")
 DEFAULT_TRIGGER_TOKEN = "sks style"
 DEFAULT_CAPTION_TEMPLATE = "{trigger}"

@@ -10,6 +10,7 @@ from lora_style_imagegen.dataset_prep import (
     DatasetError,
     DatasetValidationError,
     PrepConfig,
+    discover_images,
     main,
     prepare_dataset,
     validate_dataset,
@@ -36,6 +37,13 @@ def _seed_images(
 
 def _read_jsonl(path: Path) -> list[dict[str, str]]:
     return [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines()]
+
+
+def test_discovers_avif_images(tmp_path: Path) -> None:
+    source = tmp_path / "source.avif"
+    source.write_bytes(b"avif")
+
+    assert discover_images(tmp_path) == [source]
 
 
 def _prepare(

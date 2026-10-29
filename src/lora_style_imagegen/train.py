@@ -355,18 +355,21 @@ def _load_components(
         config.base_model,
         subfolder="text_encoder",
         dtype=dtype,
+        use_safetensors=True,
         **revision_options,
     )
     vae = AutoencoderKL.from_pretrained(
         config.base_model,
         subfolder="vae",
         torch_dtype=dtype,
+        use_safetensors=True,
         **revision_options,
     )
     unet = UNet2DConditionModel.from_pretrained(
         config.base_model,
         subfolder="unet",
         torch_dtype=dtype,
+        use_safetensors=True,
         **revision_options,
     )
     scheduler = DDPMScheduler.from_pretrained(

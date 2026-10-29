@@ -51,6 +51,11 @@ uv run train-lora --config configs/train_lora.yaml --dry-run
 - Keep commits small and scoped.
 - Add tests for behavior changes.
 - Keep Ruff clean and format with Ruff.
+- Install dependencies only from PyPI through uv. Do not add Git URLs, custom indexes, or
+  unpinned packages without approval.
+- Before adding or upgrading dependencies, run `uv lock --check`, `uv pip check`, and
+  `pip-audit` against the exported lockfile. Keep `uv.lock` hashes committed.
+- Load model weights with `use_safetensors=True`; do not load pickle `.bin` weights.
 - Do not add comments unless the user asks for them.
 - Keep dry-run free of network access and GPU requirements.
 - Do not run real base-model training locally.
