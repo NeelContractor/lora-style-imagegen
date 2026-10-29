@@ -14,11 +14,12 @@ class FakeVae:
 
     def decode(self, latents: torch.Tensor, return_dict: bool) -> tuple[torch.Tensor]:
         self.seen = latents
-        return (torch.zeros(1, 3, 8, 8),)
+        return (torch.zeros(1, 3, 8, 8, requires_grad=True),)
 
 
 class FakeImageProcessor:
     def postprocess(self, image: torch.Tensor, output_type: str) -> list[str]:
+        assert image.requires_grad is False
         return ["decoded"]
 
 

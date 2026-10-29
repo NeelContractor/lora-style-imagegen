@@ -6,11 +6,12 @@ from PIL import Image
 
 
 def decode_latents(pipe: StableDiffusionPipeline, latents: torch.Tensor) -> Image.Image:
-    decoded = pipe.vae.decode(
-        (latents / pipe.vae.config.scaling_factor).to(pipe.vae.dtype),
-        return_dict=False,
-    )[0]
-    return pipe.image_processor.postprocess(decoded, output_type="pil")[0]
+    with torch.no_grad():
+        decoded = pipe.vae.decode(
+            (latents / pipe.vae.config.scaling_factor).to(pipe.vae.dtype),
+            return_dict=False,
+        )[0]
+    return pipe.image_processor.postprocess(decoded.detach(), output_type="pil")[0]
 
 
 def generate_image(
