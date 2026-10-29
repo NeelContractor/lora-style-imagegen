@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from types import SimpleNamespace
 
 import torch
 
@@ -73,3 +74,27 @@ def test_lora_parameters_are_float32_when_base_model_is_fp16() -> None:
     assert {parameter.dtype for parameter in unet.parameters() if not parameter.requires_grad} == {
         torch.float16
     }
+
+
+def test_validation_latents_are_cast_to_vae_dtype() -> None:
+    class FakeVae:
+        dtype = torch.float16
+        config = SimpleNamespace(scaling_factor=0.18215)
+        seen: torch.Tensor | None = None
+
+        def decode(self, latents: torch.Tensor, return_dict: bool) -> tuple[torch.Tensor]:
+            self.seen = latents
+            return (torch.zeros(1, 3, 8, 8),)
+
+    class FakeImageProcessor:
+        def postprocess(self, image: torch.Tensor, output_type: str) -> list[str]:
+            return ["decoded"]
+
+    vae = FakeVae()
+    pipe = SimpleNamespace(vae=vae, image_processor=FakeImageProcessor())
+
+    image = train._decode_validation_latents(pipe, torch.ones(1, 4, 8, 8))
+
+    assert image == "decoded"
+    assert vae.seen is not None
+    assert vae.seen.dtype == torch.float16
