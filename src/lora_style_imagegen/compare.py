@@ -10,11 +10,17 @@ from pathlib import Path
 from typing import Any
 
 import torch
-from diffusers import DPMSolverMultistepScheduler, StableDiffusionPipeline
 from PIL import Image, ImageDraw, ImageFont, ImageOps
 
 from lora_style_imagegen.config import ConfigError, format_prompts
-from lora_style_imagegen.generation import generate_image
+from lora_style_imagegen.generation import (
+    GenerationError,
+    generate_image,
+    load_lora_adapter,
+    load_pipeline,
+    resolve_device,
+    resolve_dtype,
+)
 
 DEFAULT_ADAPTER_DIR = Path("outputs/lora-style/lora")
 DEFAULT_OUTPUT_DIR = Path("outputs/comparison")
@@ -153,8 +159,8 @@ def build_comparison_prompts(
 
 def run_comparison(config: ComparisonConfig) -> ComparisonResult:
     _validate_config(config)
-    device = _resolve_device(config.device)
-    dtype = _resolve_dtype(config.dtype, device)
+    device = resolve_device(config.device)
+    dtype = resolve_dtype(config.dtype, device)
     config.output_dir.mkdir(parents=True, exist_ok=True)
     base_dir = config.output_dir / "base"
     lora_dir = config.output_dir / "lora"
@@ -163,12 +169,22 @@ def run_comparison(config: ComparisonConfig) -> ComparisonResult:
 
     image_paths: dict[tuple[str, int, int], Path] = {}
     records: list[dict[str, Any]] = []
-    pipe = _load_pipeline(config, device, dtype)
+    pipe = load_pipeline(
+        config.base_model,
+        revision=config.base_model_revision,
+        device=device,
+        dtype=dtype,
+    )
     try:
         for variant in ("base", "lora"):
             if variant == "lora":
                 print(f"Loading LoRA adapter from {config.adapter_dir}")
-                _load_adapter(pipe, config)
+                load_lora_adapter(
+                    pipe,
+                    config.adapter_dir,
+                    weights_file=config.weights_file,
+                    adapter_name=config.adapter_name,
+                )
             for prompt_index, prompt in enumerate(config.prompts):
                 for seed in config.seeds:
                     print(
@@ -334,61 +350,6 @@ def _write_metadata(
     )
 
 
-def _load_pipeline(
-    config: ComparisonConfig,
-    device: torch.device,
-    dtype: torch.dtype,
-) -> StableDiffusionPipeline:
-    revision_options = (
-        {"revision": config.base_model_revision} if config.base_model_revision else {}
-    )
-    pipe = StableDiffusionPipeline.from_pretrained(
-        config.base_model,
-        dtype=dtype,
-        use_safetensors=True,
-        safety_checker=None,
-        feature_extractor=None,
-        requires_safety_checker=False,
-        **revision_options,
-    )
-    pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
-    pipe.set_progress_bar_config(disable=True)
-    pipe.enable_attention_slicing()
-    pipe.vae.enable_slicing()
-    pipe.to(device)
-    return pipe
-
-
-def _load_adapter(pipe: StableDiffusionPipeline, config: ComparisonConfig) -> None:
-    pipe.unet.load_lora_adapter(
-        str(config.adapter_dir),
-        weight_name=config.weights_file,
-        prefix=None,
-        adapter_name=config.adapter_name,
-    )
-    pipe.unet.set_adapter(config.adapter_name)
-
-
-def _resolve_device(choice: str) -> torch.device:
-    if choice == "cuda":
-        if not torch.cuda.is_available():
-            raise ComparisonError("CUDA was requested but is not available")
-        return torch.device("cuda")
-    if choice == "cpu":
-        return torch.device("cpu")
-    return torch.device("cuda") if torch.cuda.is_available() else torch.device("cpu")
-
-
-def _resolve_dtype(choice: str, device: torch.device) -> torch.dtype:
-    if choice == "fp32":
-        return torch.float32
-    if choice == "fp16":
-        if device.type != "cuda":
-            raise ComparisonError("fp16 requires CUDA; use --dtype fp32 on CPU")
-        return torch.float16
-    return torch.float16 if device.type == "cuda" else torch.float32
-
-
 def _validate_config(config: ComparisonConfig) -> None:
     if not config.adapter_dir.is_dir():
         raise ComparisonError(f"Adapter directory not found: {config.adapter_dir}")
@@ -538,7 +499,7 @@ def main(argv: Sequence[str] | None = None) -> int:
             dtype=args.dtype,
         )
         result = run_comparison(config)
-    except (ComparisonError, OSError) as exc:
+    except (ComparisonError, GenerationError, OSError) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 1
 

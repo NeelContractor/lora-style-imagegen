@@ -14,18 +14,19 @@ style or subject, then comparing and hosting the result.
   huggingface_hub, Pillow, PyYAML, tensorboard. Ask before adding anything else.
 - Never commit raw or processed images, model weights, generated outputs, tokens, or
   secrets.
-- Status: Phases 1 through 3 are complete. Wait for approval before starting Phase 4.
+- Status: Phases 1 through 4 are implemented; the Gradio demo needs a T4 smoke test.
 
 ## Commands
 
 ```sh
-make install          # sync all dependency groups and training extras
+make install          # sync all dependency groups and extras
 make check            # ruff + pytest
 make prepare          # rebuild data/processed from data/raw
 make validate         # validate data/processed
 make train-dry-run    # CPU-only pipeline check; no base model download
 make train            # real training; intended for a T4 GPU
 make compare          # base-vs-LoRA comparison; intended for a T4 GPU
+make demo             # Gradio demo; intended for a T4 GPU
 ```
 
 Run Python entry points through uv, for example:
@@ -46,12 +47,14 @@ uv run train-lora --config configs/train_lora.yaml --dry-run
   safetensors export, and CPU dry-run.
 - `src/lora_style_imagegen/compare.py`: base-vs-LoRA comparison CLI, prompt planning, grid
   rendering, and metadata export.
+- `src/lora_style_imagegen/demo.py`: lazy style runtime and Gradio interface.
+- `app/app.py`: deployment entry point for the Gradio demo.
 - `configs/train_lora.yaml`: default T4 training settings.
 - `notebooks/train_colab.ipynb`: Colab wrapper that clones the repo and starts training.
 - `notebooks/compare_colab.ipynb`: Colab wrapper that runs the base-vs-LoRA comparison.
-- `tests/`: pytest coverage for config, data, dataset prep, dry-run, generation, and
-  comparison helpers.
-- `app/`: reserved for Phase 4 Gradio hosting.
+- `notebooks/demo_colab.ipynb`: Colab wrapper that starts the Gradio demo with `--share`.
+- `tests/`: pytest coverage for config, data, dataset prep, dry-run, generation,
+  comparison, and demo helpers.
 
 ## Conventions
 
@@ -63,7 +66,11 @@ uv run train-lora --config configs/train_lora.yaml --dry-run
 - Before adding or upgrading dependencies, run `uv lock --check`, `uv pip check`, and
   `pip-audit` against the exported lockfile. Keep `uv.lock` hashes committed.
 - Load model weights with `use_safetensors=True`; do not load pickle `.bin` weights.
+- Gradio is in the `app` extra. `pillow>=13.0.0` is force-overridden because Gradio 6.31
+  caps Pillow below 13 and Pillow 12.3 has known advisories; revisit on Gradio upgrades.
+  `uv pip check` reports this intentional mismatch, and the Gradio UI is smoke-tested with
+  Pillow 13.
 - Do not add comments unless the user asks for them.
 - Keep dry-run free of network access and GPU requirements.
-- Do not run real base-model training or full base-model inference locally.
-- Stop after each requested phase and wait for approval before starting the next one.
+- Do not run real base-model training, full base-model inference, or the Gradio demo
+  locally.

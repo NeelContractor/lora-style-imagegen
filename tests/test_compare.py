@@ -144,12 +144,12 @@ def test_run_comparison_writes_grid_and_manifest(tmp_path: Path, monkeypatch) ->
     pipe = FakePipe()
     loaded_adapters: list[Path] = []
 
-    monkeypatch.setattr(compare, "_load_pipeline", lambda *args: pipe)
+    monkeypatch.setattr(compare, "load_pipeline", lambda *args, **kwargs: pipe)
 
-    def load_adapter(fake_pipe, config) -> None:
-        loaded_adapters.append(config.adapter_dir)
+    def load_adapter(fake_pipe, adapter_dir, *, weights_file, adapter_name) -> None:
+        loaded_adapters.append((adapter_dir, weights_file, adapter_name))
 
-    monkeypatch.setattr(compare, "_load_adapter", load_adapter)
+    monkeypatch.setattr(compare, "load_lora_adapter", load_adapter)
 
     config = ComparisonConfig(
         adapter_dir=adapter_dir,
@@ -172,87 +172,13 @@ def test_run_comparison_writes_grid_and_manifest(tmp_path: Path, monkeypatch) ->
 
     assert result.image_count == 4
     assert pipe.calls == 4
-    assert loaded_adapters == [adapter_dir]
+    assert loaded_adapters == [(adapter_dir, "pytorch_lora_weights.safetensors", "style")]
     assert result.grid_path.is_file()
     assert result.metadata_path.is_file()
     metadata = json.loads(result.metadata_path.read_text(encoding="utf-8"))
     assert len(metadata["images"]) == 4
     assert metadata["grid"] == "comparison_grid.png"
     assert {image["variant"] for image in metadata["images"]} == {"base", "lora"}
-
-
-def test_load_pipeline_uses_safetensors_and_vae_slicing(tmp_path: Path, monkeypatch) -> None:
-    calls: dict[str, object] = {}
-
-    class FakeScheduler:
-        config = SimpleNamespace(sample_size=64)
-
-        @staticmethod
-        def from_config(config):
-            return "scheduler"
-
-    class FakeVae:
-        def __init__(self) -> None:
-            self.sliced = False
-
-        def enable_slicing(self) -> None:
-            self.sliced = True
-
-    class FakePipe:
-        def __init__(self) -> None:
-            self.scheduler = FakeScheduler()
-            self.vae = FakeVae()
-            self.attention_sliced = False
-            self.progress_disabled = False
-            self.device = None
-
-        def set_progress_bar_config(self, disable: bool) -> None:
-            self.progress_disabled = disable
-
-        def enable_attention_slicing(self) -> None:
-            self.attention_sliced = True
-
-        def to(self, device: torch.device) -> None:
-            self.device = device
-
-    pipe = FakePipe()
-
-    class FakePipeline:
-        @staticmethod
-        def from_pretrained(*args, **kwargs):
-            calls.update(kwargs)
-            return pipe
-
-    monkeypatch.setattr(compare, "StableDiffusionPipeline", FakePipeline)
-    monkeypatch.setattr(compare, "DPMSolverMultistepScheduler", FakeScheduler)
-
-    config = ComparisonConfig(
-        adapter_dir=tmp_path / "adapter",
-        output_dir=tmp_path / "comparison",
-        base_model="stable-diffusion-v1-5/stable-diffusion-v1-5",
-        base_model_revision=None,
-        trigger_token="vbw style",
-        weights_file="pytorch_lora_weights.safetensors",
-        adapter_name="style",
-        prompts=("vbw style, a fern",),
-        seeds=(1234,),
-        negative_prompt="blurry",
-        guidance_scale=7.5,
-        num_inference_steps=2,
-        width=512,
-        height=512,
-    )
-
-    result = compare._load_pipeline(config, torch.device("cpu"), torch.float32)
-
-    assert result is pipe
-    assert calls["dtype"] is torch.float32
-    assert calls["use_safetensors"] is True
-    assert result.scheduler == "scheduler"
-    assert result.vae.sliced is True
-    assert result.attention_sliced is True
-    assert result.progress_disabled is True
-    assert result.device == torch.device("cpu")
 
 
 def test_main_reports_missing_adapter(tmp_path: Path) -> None:

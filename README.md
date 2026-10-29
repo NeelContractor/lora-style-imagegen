@@ -2,14 +2,14 @@
 
 A small, reproducible Stable Diffusion 1.5 LoRA project for one personal visual style or subject.
 
-Current scope: Phase 3, base-vs-LoRA comparison after training.
+Current scope: Phase 4, Gradio demo for the trained LoRA.
 
 ## Requirements
 
 - Python 3.11+
 - [uv](https://docs.astral.sh/uv/)
-- A CUDA T4 or better for real training and comparison; an Apple Silicon CPU is enough for
-  dry runs and tests
+- A CUDA T4 or better for real training, comparison, and the demo; an Apple Silicon CPU is
+  enough for dry runs and tests
 
 ## Dataset preparation
 
@@ -147,6 +147,50 @@ machine. No new dependencies are required.
 On Colab, open `notebooks/compare_colab.ipynb`, set the repository URL, mount Drive, and
 run the comparison cells. The adapter path defaults to
 `MyDrive/lora-style-imagegen/outputs/lora-style/lora`.
+
+## Gradio demo
+
+Install the training and app extras:
+
+```sh
+make install
+```
+
+Start the demo with a local adapter:
+
+```sh
+make demo
+```
+
+Or provide the adapter path explicitly:
+
+```sh
+uv run style-demo \
+  --adapter-dir outputs/lora-style/lora
+```
+
+Open the URL printed by Gradio. The app generates a base image and a LoRA image from the
+same prompt and seed. The LoRA strength slider controls the adapter scale; setting it to
+0 matches the base output. A seed of `-1` produces a random seed and reports the value
+used.
+
+The app loads the base model and adapter lazily on the first request, so the first
+generation is slower. On Colab, open `notebooks/demo_colab.ipynb` and run its cells, or
+run the commands directly with `--share` to create a public Gradio link:
+
+```sh
+uv sync --extra train --extra app --no-dev
+uv run style-demo \
+  --adapter-dir /content/drive/MyDrive/lora-style-imagegen/outputs/lora-style/lora \
+  --share
+```
+
+The app reads `LORA_ADAPTER_DIR` and `LORA_BASE_MODEL` when the corresponding command-line
+options are not supplied. `app/app.py` is the Gradio entry point for deployments.
+
+Gradio 6.31 caps Pillow below 13, while Pillow 12.3 has known security advisories. The
+project overrides the cap to install Pillow 13 and smoke-tests the Gradio UI against it.
+`uv pip check` reports this intentional mismatch.
 
 ## Development
 
