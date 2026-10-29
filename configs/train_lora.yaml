@@ -1,0 +1,41 @@
+base_model: stable-diffusion-v1-5/stable-diffusion-v1-5
+base_model_revision: null
+dataset_dir: data/processed
+output_dir: outputs/lora-style
+run_name: lora-style
+trigger_token: null
+resolution: 512
+seed: 42
+rank: 16
+lora_alpha: 16
+lora_dropout: 0.0
+target_modules:
+  - to_q
+  - to_k
+  - to_v
+  - to_out.0
+batch_size: 1
+gradient_accumulation_steps: 4
+max_train_steps: 800
+learning_rate: 0.0001
+lr_scheduler: cosine
+lr_warmup_steps: 50
+gradient_checkpointing: true
+use_8bit_adam: true
+mixed_precision: fp16
+max_grad_norm: 1.0
+save_steps: 400
+validation_steps: 200
+validation_prompts:
+  - "{trigger}, portrait of a person, soft window light"
+  - "{trigger}, a quiet street at dusk"
+  - "{trigger}, a still life of flowers"
+validation_seeds:
+  - 1234
+  - 5678
+  - 9012
+validation_guidance_scale: 7.5
+validation_inference_steps: 25
+validation_negative_prompt: "low quality, blurry, deformed, watermark, text"
+report_to: tensorboard
+logging_steps: 10
