@@ -38,6 +38,7 @@ from lora_style_imagegen.data import (
     load_caption_records,
 )
 from lora_style_imagegen.dataset_prep import DatasetError, validate_dataset
+from lora_style_imagegen.generation import generate_image
 
 LORA_WEIGHT_FILE = "pytorch_lora_weights.safetensors"
 DRY_RUN_STEPS = 3
@@ -602,17 +603,6 @@ def _build_validation_pipeline(
     return pipe
 
 
-def _decode_validation_latents(
-    pipe: StableDiffusionPipeline,
-    latents: torch.Tensor,
-) -> Image.Image:
-    decoded = pipe.vae.decode(
-        (latents / pipe.vae.config.scaling_factor).to(pipe.vae.dtype),
-        return_dict=False,
-    )[0]
-    return pipe.image_processor.postprocess(decoded, output_type="pil")[0]
-
-
 def _make_validation_callback(
     *,
     accelerator: Accelerator,
@@ -635,16 +625,17 @@ def _make_validation_callback(
         try:
             for index, prompt in enumerate(prompts):
                 seed = config.validation_seeds[index % len(config.validation_seeds)]
-                generator = torch.Generator(device=accelerator.device).manual_seed(seed)
-                latents = pipe(
+                image = generate_image(
+                    pipe,
                     prompt=prompt,
                     negative_prompt=config.validation_negative_prompt,
                     num_inference_steps=config.validation_inference_steps,
                     guidance_scale=config.validation_guidance_scale,
-                    generator=generator,
-                    output_type="latent",
-                ).images
-                image = _decode_validation_latents(pipe, latents)
+                    width=config.resolution,
+                    height=config.resolution,
+                    seed=seed,
+                    device=accelerator.device,
+                )
                 image.save(output_dir / f"{index:02d}.png")
                 images[f"validation/{index:02d}"] = _image_to_tensorboard(image).unsqueeze(0)
                 print(f"validation step {step}: saved {output_dir / f'{index:02d}.png'}")
@@ -716,6 +707,7 @@ def _artifact_metadata(
         "steps": steps,
         "validation_prompts": list(prompts),
         "validation_seeds": list(config.validation_seeds),
+        "validation_negative_prompt": config.validation_negative_prompt,
         "validation_guidance_scale": config.validation_guidance_scale,
         "validation_inference_steps": config.validation_inference_steps,
     }

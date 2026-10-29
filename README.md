@@ -2,13 +2,14 @@
 
 A small, reproducible Stable Diffusion 1.5 LoRA project for one personal visual style or subject.
 
-Current scope: Phase 2, dataset preparation and LoRA training.
+Current scope: Phase 3, base-vs-LoRA comparison after training.
 
 ## Requirements
 
 - Python 3.11+
 - [uv](https://docs.astral.sh/uv/)
-- A CUDA T4 or better for real training; an Apple Silicon CPU is enough for dry runs
+- A CUDA T4 or better for real training and comparison; an Apple Silicon CPU is enough for
+  dry runs and tests
 
 ## Dataset preparation
 
@@ -105,6 +106,47 @@ Validation prompts use `{trigger}`; the trigger token itself is read from
 Open `notebooks/train_colab.ipynb` in Colab, select a T4 GPU, set your repository URL, and
 mount Drive. The notebook clones the repository, installs `uv`, syncs the training
 extras, prepares the dataset if needed, runs training, and displays validation images.
+
+## Base vs LoRA comparison
+
+After training, compare the base model with the adapter using identical prompts, seeds,
+and sampling settings:
+
+```sh
+make compare
+```
+
+This reads `outputs/lora-style/lora/lora_metadata.json`, generates the adapter's
+validation prompts with the trigger token, and adds a matching version of each prompt
+without the trigger. The default run produces two variants for every prompt and seed,
+writes individual images under `outputs/comparison/base/` and
+`outputs/comparison/lora/`, and builds:
+
+- `outputs/comparison/comparison_grid.png`: rows are prompts, columns alternate base and
+  LoRA for each seed
+- `outputs/comparison/comparison_metadata.json`: model, prompt, seed, device, and file
+  manifest
+
+Override the defaults when needed:
+
+```sh
+uv run compare-lora \
+  --adapter-dir outputs/lora-style/lora \
+  --output-dir outputs/comparison \
+  --prompt "{trigger}, a botanical study of ferns" \
+  --prompt "a mushroom in a forest" \
+  --seed 1234 \
+  --steps 25
+```
+
+The comparison uses the safetensors adapter and the DPM-Solver scheduler used for
+training validation. It uses CUDA fp16 automatically on a T4 and falls back to CPU fp32;
+CPU generation is supported but slow and is not recommended on the 8 GB development
+machine. No new dependencies are required.
+
+On Colab, open `notebooks/compare_colab.ipynb`, set the repository URL, mount Drive, and
+run the comparison cells. The adapter path defaults to
+`MyDrive/lora-style-imagegen/outputs/lora-style/lora`.
 
 ## Development
 

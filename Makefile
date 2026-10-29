@@ -1,4 +1,4 @@
-.PHONY: install test lint format check prepare validate train train-dry-run pre-commit
+.PHONY: install test lint format check prepare validate train train-dry-run compare pre-commit
 
 install:
 	uv sync --all-groups --extra train
@@ -27,6 +27,9 @@ train:
 
 train-dry-run:
 	uv run train-lora --config configs/train_lora.yaml --dry-run
+
+compare:
+	uv run compare-lora --adapter-dir outputs/lora-style/lora --output-dir outputs/comparison
 
 pre-commit:
 	uv run pre-commit run --all-files

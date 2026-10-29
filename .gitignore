@@ -22,6 +22,8 @@ runs/
 *.ckpt
 *.pt
 *.pth
+lora-style-results/
+lora-style-results.zip
 
 *.key
 *.pem

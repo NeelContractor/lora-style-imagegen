@@ -14,7 +14,7 @@ style or subject, then comparing and hosting the result.
   huggingface_hub, Pillow, PyYAML, tensorboard. Ask before adding anything else.
 - Never commit raw or processed images, model weights, generated outputs, tokens, or
   secrets.
-- Status: Phases 1 and 2 are complete. Wait for approval before starting Phase 3.
+- Status: Phases 1 through 3 are complete. Wait for approval before starting Phase 4.
 
 ## Commands
 
@@ -25,6 +25,7 @@ make prepare          # rebuild data/processed from data/raw
 make validate         # validate data/processed
 make train-dry-run    # CPU-only pipeline check; no base model download
 make train            # real training; intended for a T4 GPU
+make compare          # base-vs-LoRA comparison; intended for a T4 GPU
 ```
 
 Run Python entry points through uv, for example:
@@ -39,11 +40,17 @@ uv run train-lora --config configs/train_lora.yaml --dry-run
 - `src/lora_style_imagegen/dataset_prep.py`: Phase 1 image prep and validation.
 - `src/lora_style_imagegen/config.py`: strict YAML training config.
 - `src/lora_style_imagegen/data.py`: caption record loading for training.
+- `src/lora_style_imagegen/generation.py`: shared latent decoding and seeded image
+  generation.
 - `src/lora_style_imagegen/train.py`: training CLI, LoRA training, validation images,
   safetensors export, and CPU dry-run.
+- `src/lora_style_imagegen/compare.py`: base-vs-LoRA comparison CLI, prompt planning, grid
+  rendering, and metadata export.
 - `configs/train_lora.yaml`: default T4 training settings.
 - `notebooks/train_colab.ipynb`: Colab wrapper that clones the repo and starts training.
-- `tests/`: pytest coverage for config, data, dataset prep, and dry-run helpers.
+- `notebooks/compare_colab.ipynb`: Colab wrapper that runs the base-vs-LoRA comparison.
+- `tests/`: pytest coverage for config, data, dataset prep, dry-run, generation, and
+  comparison helpers.
 - `app/`: reserved for Phase 4 Gradio hosting.
 
 ## Conventions
@@ -58,5 +65,5 @@ uv run train-lora --config configs/train_lora.yaml --dry-run
 - Load model weights with `use_safetensors=True`; do not load pickle `.bin` weights.
 - Do not add comments unless the user asks for them.
 - Keep dry-run free of network access and GPU requirements.
-- Do not run real base-model training locally.
+- Do not run real base-model training or full base-model inference locally.
 - Stop after each requested phase and wait for approval before starting the next one.

@@ -13,6 +13,7 @@ dependencies = [
 ]
 
 [project.scripts]
+compare-lora = "lora_style_imagegen.compare:main"
 prepare-dataset = "lora_style_imagegen.dataset_prep:main"
 train-lora = "lora_style_imagegen.train:main"
 
