@@ -1,4 +1,4 @@
-.PHONY: install test lint format check prepare validate train train-dry-run compare demo pre-commit
+.PHONY: install test lint format check build prepare validate train train-dry-run compare demo pre-commit
 
 install:
 	uv sync --all-groups --all-extras
@@ -15,6 +15,9 @@ format:
 	uv run ruff format .
 
 check: lint test
+
+build:
+	uv build
 
 prepare:
 	uv run prepare-dataset

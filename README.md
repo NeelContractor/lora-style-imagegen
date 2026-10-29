@@ -2,7 +2,7 @@
 
 A small, reproducible Stable Diffusion 1.5 LoRA project for one personal visual style or subject.
 
-Current scope: Phase 4, Gradio demo for the trained LoRA.
+Status: Phases 1 through 4 are complete, with package builds in place.
 
 ## Requirements
 
@@ -207,9 +207,11 @@ hardware.
 
 ```sh
 make check
+make build
 make pre-commit
 ```
 
-`make check` runs Ruff and pytest. The pre-commit configuration also blocks files larger
-than 500 KB, private keys, and common whitespace issues. Weights, processed images, raw
-images, tokens, and secrets are ignored by git.
+`make check` runs Ruff and pytest. `make build` writes the sdist and wheel to `dist/`,
+which is ignored by git. The pre-commit configuration also blocks files larger than
+500 KB, private keys, and common whitespace issues. Weights, processed images, raw images,
+tokens, and secrets are ignored by git.

@@ -14,13 +14,15 @@ style or subject, then comparing and hosting the result.
   huggingface_hub, Pillow, PyYAML, tensorboard. Ask before adding anything else.
 - Never commit raw or processed images, model weights, generated outputs, tokens, or
   secrets.
-- Status: Phases 1 through 4 are complete; the Gradio demo is smoke-tested on a T4.
+- Status: Phases 1 through 4 are complete; the Gradio demo is smoke-tested on a T4, and
+  package builds are in place.
 
 ## Commands
 
 ```sh
 make install          # sync all dependency groups and extras
 make check            # ruff + pytest
+make build            # build sdist and wheel into dist/
 make prepare          # rebuild data/processed from data/raw
 make validate         # validate data/processed
 make train-dry-run    # CPU-only pipeline check; no base model download
