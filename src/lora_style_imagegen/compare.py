@@ -344,7 +344,7 @@ def _load_pipeline(
     )
     pipe = StableDiffusionPipeline.from_pretrained(
         config.base_model,
-        torch_dtype=dtype,
+        dtype=dtype,
         use_safetensors=True,
         safety_checker=None,
         feature_extractor=None,
@@ -354,7 +354,7 @@ def _load_pipeline(
     pipe.scheduler = DPMSolverMultistepScheduler.from_config(pipe.scheduler.config)
     pipe.set_progress_bar_config(disable=True)
     pipe.enable_attention_slicing()
-    pipe.enable_vae_slicing()
+    pipe.vae.enable_slicing()
     pipe.to(device)
     return pipe
 
