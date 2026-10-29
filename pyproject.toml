@@ -1,0 +1,31 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "lora-style-imagegen"
+version = "0.1.0"
+description = "LoRA fine-tuning and demo for a personal Stable Diffusion 1.5 style"
+requires-python = ">=3.11"
+dependencies = ["pillow>=10.4.0"]
+
+[project.scripts]
+prepare-dataset = "lora_style_imagegen.dataset_prep:main"
+
+[dependency-groups]
+dev = ["pre-commit>=4.0.0", "pytest>=8.3.0", "ruff>=0.8.0"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/lora_style_imagegen"]
+
+[tool.pytest.ini_options]
+addopts = "-ra"
+testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 100
+src = ["src", "tests"]
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["B", "E", "F", "I", "RUF", "SIM", "UP"]
